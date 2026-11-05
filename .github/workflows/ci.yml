@@ -1,0 +1,28 @@
+name: Alpha CI
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Compile Python sources
+        run: python -m compileall -q app
+      - name: Run unit and integration tests
+        run: python -m pytest -q
+      - name: Check for accidentally committed secrets
+        run: |
+          if git ls-files | grep -Eq '(^|/)(\.env$|\.env\.[^e]|secrets\.json$|alpha\.db$)'; then
+            echo 'Sensitive/runtime file is tracked'; exit 1
+          fi

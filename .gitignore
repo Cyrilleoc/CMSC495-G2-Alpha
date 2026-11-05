@@ -9,3 +9,21 @@ data/
 .coverage
 .DS_Store
 .venv/
+
+# Python environment
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Local databases
+*.db
+*.sqlite3
+
+# Secrets and local configuration
+.env
+.env.local
+.env.production
+
+# Windows metadata
+*:Zone.Identifier
