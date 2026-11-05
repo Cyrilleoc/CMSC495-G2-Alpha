@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Group G-2 · Customer Service Alpha</title>
+<style>
+:root{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#142338;background:#f4f7fb}
+body{margin:0}.wrap{max-width:1020px;margin:30px auto;padding:0 20px}
+header{background:#16263f;color:white;padding:20px 28px}h1{font-size:24px;margin:0}header p{margin:7px 0 0;color:#cbd6e6}
+.grid{display:grid;grid-template-columns:1.5fr 1fr;gap:18px}@media(max-width:760px){.grid{grid-template-columns:1fr}}
+.panel{background:white;border:1px solid #dce3ef;border-radius:12px;padding:22px;box-shadow:0 4px 15px #1529440c}
+button{border:0;background:#1559a6;color:white;border-radius:8px;padding:10px 13px;cursor:pointer;font-weight:600}
+button.secondary{background:#e8eef7;color:#173b66}button:disabled{opacity:.5;cursor:not-allowed}
+textarea,input{font:inherit;border:1px solid #aebed2;border-radius:7px;padding:10px;width:100%;box-sizing:border-box}
+small,.muted{color:#52687e}.message{padding:12px 14px;margin:8px 0;border-radius:10px;background:#edf3fa}
+.message.agent{background:#e7f8eb}.message.bot{background:#ecf3ff}.error{color:#a52626}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}#messages{max-height:420px;overflow:auto;margin:15px 0}
+hr{border:0;border-top:1px solid #e7edf4;margin:18px 0}label{display:block;margin:8px 0;font-weight:600}
+</style></head>
+<body><header><h1>Group G-2 · Customer Service Alpha</h1><p>CMSC 495 · Demo inquiry, FAQ assistant, escalation, and agent handoff</p></header>
+<div class="wrap"><div class="grid"><section class="panel"><h2>Customer conversation</h2>
+<p class="muted">A local prototype with a reviewed FAQ knowledge base. Unrecognized requests go to a support agent.</p>
+<div class="controls"><button onclick="newChat()">Start conversation</button><button class="secondary" onclick="sendEscalation()">Request human agent</button></div>
+<div id="messages" role="log" aria-live="polite"></div>
+<div class="controls"><button type="button" class="secondary" onclick="giveFeedback('helpful')">Helpful answer</button><button type="button" class="secondary" onclick="giveFeedback('not_helpful')">Not helpful</button><button type="button" class="secondary" onclick="refreshMessages()">Refresh messages</button></div>
+<form onsubmit="sendMessage(event)"><label for="question">Your question</label><textarea id="question" rows="3" placeholder="How do I reset my password?" required maxlength="2000"></textarea>
+<div class="controls"><button type="submit">Send</button><button type="button" class="secondary" onclick="sendSample()">Try FAQ example</button></div></form>
+<div id="customer-status" role="status"></div>
+</section><section class="panel"><h2>Human agent desk</h2><p class="muted">Demo agent identity: <strong>agent-one</strong>. Role headers are not production authentication.</p>
+<div class="controls"><button onclick="loadTickets()">Refresh tickets</button></div><div id="tickets"></div><hr>
+<h3>Current conversation</h3><p id="conv-state" class="muted">Start a conversation first.</p>
+<h3>Example topics</h3><p class="muted">Password resets, invoices, deliveries, refunds, support hours, and human support.</p>
+<p><small>Prototype limitations: single-instance SQLite, synchronous AI processing, and demo identity. Not suitable for public deployment.</small></p>
+</section></div></div>
+<script>
+let convId=null, lastAssistant=null;
+const customerHeaders={'Content-Type':'application/json','X-Demo-Actor':'customer-one','X-Demo-Role':'customer'};
+const agentHeaders={'Content-Type':'application/json','X-Demo-Actor':'agent-one','X-Demo-Role':'agent'};
+async function req(path,method='GET',body=null,agent=false){
+ const opts={method,headers:{...(agent?agentHeaders:customerHeaders)}};if(method==='POST'&&path.endsWith('/messages'))opts.headers['Idempotency-Key']=crypto.randomUUID();
+ if(body!==null)opts.body=JSON.stringify(body);
+ const r=await fetch(path,opts);const j=await r.json();if(!r.ok)throw new Error(j.detail||j.title||'Request failed');return j;
+}
+const status=(s,bad=false)=>{const n=document.getElementById('customer-status');n.textContent=s;n.className=bad?'error':''};
+const escape=(s)=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function show(role,message){document.getElementById('messages').insertAdjacentHTML('beforeend',`<div class="message ${role}"><strong>${escape(role)}</strong>: ${escape(message)}</div>`)}
+async function newChat(){try{const r=await req('/v1/conversations','POST');convId=r.conversation_id;lastAssistant=null;document.getElementById('messages').innerHTML='';document.getElementById('conv-state').textContent='Conversation: '+convId;status('Conversation opened.');}catch(e){status(e.message,true)}}
+async function sendMessage(event){event.preventDefault();if(!convId)await newChat();if(!convId)return;const text=document.getElementById('question').value.trim();if(!text)return;
+ try{const r=await req(`/v1/conversations/${convId}/messages`,'POST',{client_message_id:crypto.randomUUID(),text});
+ show('customer',text);document.getElementById('question').value='';if(r.reply){show('bot',r.reply);lastAssistant=r.assistant_message_id;status('Matched approved FAQ: '+r.source_ids.join(', '));}
+ else{show('system','I could not safely answer that question. A human ticket was created.');status('Escalation ticket: '+r.ticket_id);loadTickets();}}catch(e){status(e.message,true)}}
+async function sendEscalation(){if(!convId){status('Start a conversation first',true);return;}try{const r=await req(`/v1/conversations/${convId}/escalations`,'POST',{reason:'user_request'});show('system','Human assistance requested. Ticket '+r.ticket_id);loadTickets()}catch(e){status(e.message,true)}}
+function sendSample(){document.getElementById('question').value='How do I reset my password?';}
+async function refreshMessages(){if(!convId)return;try{const r=await req(`/v1/conversations/${convId}/messages`);document.getElementById('messages').innerHTML='';for(const m of r.items)show(m.role==='assistant'?'bot':m.role,m.text);}catch(e){status(e.message,true)}}
+async function giveFeedback(rating){if(!lastAssistant)return;try{await req(`/v1/conversations/${convId}/feedback`,'POST',{message_id:lastAssistant,rating});status('Feedback saved for human review.')}catch(e){status(e.message,true)}}
+async function loadTickets(){try{const r=await req('/v1/agent/tickets','GET',null,true);const n=document.getElementById('tickets');n.innerHTML='';
+ if(!r.items.length){n.textContent='No tickets yet';return;}
+ for(const t of r.items){const d=document.createElement('div');d.className='message';d.innerHTML=`<strong>${escape(t.status)}</strong> · ${escape(t.reason)}<div><small>${escape(t.id)}</small></div>`;
+ if(t.status==='queued'){const b=document.createElement('button');b.textContent='Claim';b.onclick=async()=>{try{await req(`/v1/agent/tickets/${t.id}/claim`,'POST',{version:t.version},true);loadTickets();}catch(e){alert(e.message)}};d.appendChild(b)}
+ if(t.status==='assigned' && t.agent==='agent-one'){const b=document.createElement('button');b.className='secondary';b.textContent='Reply to customer';b.onclick=async()=>{const text=prompt('Type agent reply:');if(text){try{await req(`/v1/agent/tickets/${t.id}/replies`,'POST',{text},true);status('Agent replied; refresh messages to inspect history.')}catch(e){alert(e.message)}}};d.appendChild(b)}n.appendChild(d)}
+ }catch(e){document.getElementById('tickets').textContent=e.message}}
+</script>
+</body></html>
