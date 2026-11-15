@@ -160,6 +160,17 @@ def test_redaction():
     assert '[email redacted]' in redact('Email me at alice@example.org')
 
 
+def test_api_responses_disable_caching(client):
+    conv = new_chat(client)
+    history = client.get(f'/v1/conversations/{conv}/messages', headers=CUSTOMER)
+    assert history.status_code == 200
+    assert history.headers['cache-control'] == 'no-store'
+
+    forbidden = client.get('/v1/agent/tickets', headers=CUSTOMER)
+    assert forbidden.status_code == 403
+    assert forbidden.headers['cache-control'] == 'no-store'
+
+
 def test_rate_limit(tmp_path, monkeypatch):
     monkeypatch.setenv('DEMO_RATE_LIMIT', '1')
     with TestClient(create_app(tmp_path / 'rate.sqlite')) as c:
@@ -167,6 +178,7 @@ def test_rate_limit(tmp_path, monkeypatch):
         r = c.post('/v1/conversations', headers=CUSTOMER)
         assert r.status_code == 429
         assert r.headers['retry-after'] == '60'
+        assert r.headers['cache-control'] == 'no-store'
 
 
 def test_ai_provider_failure_uses_safe_escalation(monkeypatch, client):

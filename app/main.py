@@ -128,13 +128,17 @@ def create_app(db_path=None):
                 events = [x for x in app.state.rate_events.get(key, []) if t - x < 60.0]
                 if len(events) >= quota:
                     return JSONResponse(status_code=429, media_type='application/problem+json',
-                                        headers={'Retry-After': '60'},
+                                        headers={'Retry-After': '60', 'Cache-Control': 'no-store'},
                                         content={'type': 'about:blank', 'title': 'Too Many Requests',
                                                  'status': 429, 'code': 'RATE_LIMITED',
                                                  'detail': 'Demo request quota exceeded'})
                 events.append(t)
                 app.state.rate_events[key] = events
-        return await call_next(request)
+        response = await call_next(request)
+        # Customer and agent API responses can contain sensitive conversation data.
+        if request.url.path.startswith('/v1/'):
+            response.headers['Cache-Control'] = 'no-store'
+        return response
 
     @app.exception_handler(HTTPException)
     async def http_error(_: Request, exc: HTTPException):

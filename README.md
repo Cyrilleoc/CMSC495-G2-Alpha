@@ -1,10 +1,10 @@
 # CMSC 495 · Group G-2 · Customer Service Alpha (starter implementation)
 
 **Team:** Nonvignon Oussou (Lead Architect), Dylan Albert (Interface Designer), Lo Morton (Integration Lead).  
-**Status:** Verified **local prototype starter**, not a published or team-approved GitHub Alpha release.  
+**Status:** Group G-2 shared Alpha prototype, with PR-based peer review and CI checks. Not production-ready.  
 **Course:** CMSC 495 · Unit 5 Assignment 1.
 
-> This package is a working reference implementation aligned with the Group G-2 Unit 3 design. It is not a substitute for the team's existing Unit 4 repository, genuine commits, peer reviews, or an actual green GitHub Actions run. Merge/adapt into that repository after reviewing team code.
+> **Group repository:** https://github.com/Cyrilleoc/CMSC495-G2-Alpha. Review the latest pull requests, commits, and Actions checks for current evidence. This remains a local coursework prototype, not a deployed production service.
 
 ## 1. Working Alpha scope
 
@@ -92,6 +92,14 @@ curl -s -X POST http://127.0.0.1:8000/v1/conversations \
 
 Use the returned conversation UUID with `/v1/conversations/{id}/messages`. A completed example is available in the browser UI.
 
+### API Response Caching Policy
+
+All customer and agent API responses under `/v1/` include `Cache-Control: no-store`. This directs compliant browsers and intermediary caches not to store potentially sensitive conversation, ticket, or error-response information, including HTTP 429 rate-limit responses.
+
+Automated tests cover the header on HTTP 200, 403, and 429 responses. Follow-up testing should cover unauthenticated HTTP 401 responses and verify that routes outside `/v1/` are unaffected.
+
+This header is an additional privacy safeguard; it does not replace authentication, authorization, secure transport, or responsible data and log handling.
+
 ## 5. Continuous integration
 
 `.github/workflows/ci.yml` triggers on pushes and pull requests and performs:
@@ -102,7 +110,7 @@ Use the returned conversation UUID with `/v1/conversations/{id}/messages`. A com
 4. Unit/integration tests with pytest.
 5. A basic check that runtime secret files aren't tracked.
 
-**Local verification:** 20 tests passed in the preparation environment. **GitHub status:** Not run; add the files to your shared team repo, push and verify that its Actions check is green. If your Unit 4 workflow already exists, preserve it and integrate these tests rather than overwriting it. Real CI status must be evidenced by a successful run in the shared repository.
+**Verification:** The original Ubuntu WSL demo passed 22 tests; a separate local test of the PR #1 caching change passed 23 tests. PR reviewer RedBred109 reported passing checks and approved the changes. Recheck the latest GitHub Actions status before final submission.
 
 ## 6. Security and technical-debt honesty
 
@@ -121,7 +129,7 @@ See `docs/TECHNICAL_DEBT.md` for mitigation priorities.
 
 ## 7. GitHub submission instructions
 
-**Use the team's real shared repository.** Do not invent a new URL in the assignment. Recommended process:
+**Use the shared Group G-2 repository linked above.** Develop changes on feature branches, use PR review, and confirm automated checks before merging. Example workflow:
 
 ```bash
 # In the actual team clone:
