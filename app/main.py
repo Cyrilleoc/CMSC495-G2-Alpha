@@ -118,6 +118,11 @@ def create_app(db_path=None):
     app.state.rate_lock = threading.Lock()
     app.state.rate_events = {}
 
+    def no_store(response):
+        # Central policy: every /v1/ response, including early 429 responses.
+        response.headers['Cache-Control'] = 'no-store'
+        return response
+
     @app.middleware('http')
     async def rate_limit(request: Request, call_next):
         quota = int(os.getenv('DEMO_RATE_LIMIT', '0'))  # disabled unless explicitly enabled
@@ -127,17 +132,18 @@ def create_app(db_path=None):
                 t = time.monotonic()
                 events = [x for x in app.state.rate_events.get(key, []) if t - x < 60.0]
                 if len(events) >= quota:
-                    return JSONResponse(status_code=429, media_type='application/problem+json',
-                                        headers={'Retry-After': '60', 'Cache-Control': 'no-store'},
-                                        content={'type': 'about:blank', 'title': 'Too Many Requests',
-                                                 'status': 429, 'code': 'RATE_LIMITED',
-                                                 'detail': 'Demo request quota exceeded'})
+                    return no_store(JSONResponse(
+                        status_code=429, media_type='application/problem+json',
+                        headers={'Retry-After': '60'},
+                        content={'type': 'about:blank', 'title': 'Too Many Requests',
+                                 'status': 429, 'code': 'RATE_LIMITED',
+                                 'detail': 'Demo request quota exceeded'}))
                 events.append(t)
                 app.state.rate_events[key] = events
         response = await call_next(request)
         # Customer and agent API responses can contain sensitive conversation data.
         if request.url.path.startswith('/v1/'):
-            response.headers['Cache-Control'] = 'no-store'
+            return no_store(response)
         return response
 
     @app.exception_handler(HTTPException)
