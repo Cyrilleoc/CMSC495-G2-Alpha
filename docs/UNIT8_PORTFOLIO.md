@@ -65,6 +65,7 @@ Nonvignon writes **his own** evidence-based position paper: 400 words on integra
 - [Unit 5 reviewed PR](https://github.com/Cyrilleoc/CMSC495-G2-Alpha/pull/3)
 - [Unit 5 passing main CI](https://github.com/Cyrilleoc/CMSC495-G2-Alpha/actions/runs/44923611561)
 - [Quality Report](QUALITY_REPORT.md)
+- [Team Contributions (verification pending)](CONTRIBUTIONS.md)
 - [API Reference](API_REFERENCE.md)
 - [User Guide](USER_GUIDE.md)
 - [Install / Local Deployment](INSTALL_AND_DEPLOY.md)
