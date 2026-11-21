@@ -7,7 +7,8 @@
 - Last confirmed student Ubuntu WSL run: **51 tests passed**; a Starlette deprecation warning was non-fatal.
 - Independent local replay of the Unit 5 source: **51/51 tests passed** and **96% application statement coverage** (267 executable statements, 10 missed before the database cleanup).
 - After correcting SQLite initialization connection disposal, independent local replay: **51/51 tests passed**, **96.28% statement coverage** (269 statements, 10 missed). A 90% minimum quality gate was met.
-- New GitHub Actions workflow generates `coverage.xml` and `htmlcov/` as downloadable artifacts and enforces **90% minimum**. Confirm its latest run before claiming remote coverage.
+- Confirmed Unit 8 GitHub Actions run: **51 passed, 1 non-fatal warning, 96.28% statement coverage** with a 90% gate, plus successful Docker build and ephemeral container API/UI smoke tests. See [the verified workflow run](https://github.com/Cyrilleoc/CMSC495-G2-Alpha/actions/runs/44929268023).
+- The run uploaded `alpha-coverage` (XML and HTML coverage), available from the workflow's Artifacts section.
 - Coverage is **statement coverage**, not branch coverage; 96% does not imply secure or fully tested behavior.
 
 Commands:
@@ -30,6 +31,14 @@ python scripts/benchmark_retrieval.py
 - This measures **in-process lexical FAQ lookup**, not HTTP latency, model token latency, fairness, precision/recall over real users, or system capacity.
 - The six-entry FAQ is English-only. Varying hardware and load will change timings.
 
+## Local API microbenchmark (not a load test)
+
+A separate Python 3.13 local replay (single-process FastAPI TestClient, in-memory request execution plus SQLite) measured:
+- `GET /healthz`, n=200: p50 **0.542 ms**, p95 **0.854 ms**.
+- Supported FAQ message POST, n=50: p50 **3.029 ms**, p95 **4.232 ms**.
+
+The verified CI environment has different timing; do not combine distributions or claim these as network or production latencies. Rerun `python scripts/benchmark_api.py` for environment-specific results.
+
 ## Peer review and version control
 
 - [PR #1: cache-control hardening](https://github.com/Cyrilleoc/CMSC495-G2-Alpha/pull/1).
@@ -39,7 +48,7 @@ python scripts/benchmark_retrieval.py
 
 ## CI/CD and deployment evidence
 
-The original workflow tested code; it did not deploy. The Unit 8 branch adds Docker image build plus HTTP health and browser-HTML smoke tests in an **ephemeral CI container**, but **not an external/staging/production deployment**. Capture the green workflow results and the coverage artifact after CI completes. A live public service remains unsafe due to spoofable demo headers.
+The original workflow tested code; it did not deploy. The Unit 8 branch adds Docker image build plus HTTP health and browser-HTML smoke tests in an **ephemeral CI container**, but **not an external/staging/production deployment**. The successful run is linked above; capture its green result and downloadable coverage artifact for the final portfolio. A live public service remains unsafe due to spoofable demo headers.
 
 ## Release risks
 
