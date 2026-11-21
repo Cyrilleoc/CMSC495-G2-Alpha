@@ -9,10 +9,10 @@ Repository: https://github.com/Cyrilleoc/CMSC495-G2-Alpha
 - [x] Customer conversation, approved FAQ chatbot, escalation, agent replies, feedback.
 - [x] Three scripted end-to-end API scenarios; automated tests.
 - [x] Approved synthetic FAQ source IDs and safe escalation fallback.
-- [x] Current README plus architecture, API and user documentation.
+- [x] Current README plus architecture, API, user, local deployment and quality documentation.
 - [x] Pull-request review evidence (PR #1 and #3).
 - [ ] Unit 8 pull request reviewed and merged by team after checks.
-- [ ] Capture new CI coverage artifact and Docker smoke-test job screenshot.
+- [x] GitHub CI coverage artifact and Docker smoke-test workflow verified (branch); [ ] capture instructor-facing screenshots after merging.
 - [ ] Record actual stable local live demonstration (video, not just test output).
 - [ ] Confirm final deadline and submit accessible repository URL.
 - [ ] Validate a real external model only if approved credentials and privacy controls exist; otherwise label it unverified.
