@@ -28,10 +28,17 @@ def _cosine(a: Counter, b: Counter) -> float:
     return numerator / (norm_a * norm_b)
 
 
+# Immutable sample FAQ representation calculated once at import time.
+# When external FAQ content is added, rebuild this index at data-refresh time.
+FAQ_VECTORS = tuple((tokens(item['question']), item) for item in FAQ)
+
+
 def retrieve(question: str, threshold: float = 0.38) -> dict | None:
-    """Small lexical-retrieval prototype; not a trained language model."""
+    """Retrieve an approved FAQ response with a precomputed lexical index."""
     q = tokens(question)
-    ranked = sorted((( _cosine(q, tokens(item['question'])), item) for item in FAQ),
+    ranked = sorted(((_cosine(q, vec), item) for vec, item in FAQ_VECTORS),
                     key=lambda pair: pair[0], reverse=True)
+    if not ranked:
+        return None
     confidence, record = ranked[0]
-    return {**record, "confidence": round(confidence, 4)} if confidence >= threshold else None
+    return {**record, 'confidence': round(confidence, 4)} if confidence >= threshold else None
