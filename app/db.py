@@ -1,6 +1,7 @@
 """SQLite data adapter for a single-instance local Alpha; PostgreSQL planned for scaling."""
 import sqlite3
 from pathlib import Path
+from contextlib import closing
 
 DDL = """
 CREATE TABLE IF NOT EXISTS conversations (
@@ -36,5 +37,7 @@ def connect(path: str) -> sqlite3.Connection:
 
 def initialize(path: str):
     Path(path).parent.mkdir(parents=True, exist_ok=True)
-    with connect(path) as connection:
-        connection.executescript(DDL)
+    # sqlite3's context manager commits/rolls back but does not close the connection.
+    with closing(connect(path)) as connection:
+        with connection:
+            connection.executescript(DDL)
