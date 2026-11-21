@@ -25,7 +25,7 @@ jobs:
         run: |
           python -m pytest -q --cov=app --cov-report=term-missing --cov-report=xml:coverage.xml --cov-report=html:htmlcov --cov-fail-under=90
       - name: Upload coverage evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: alpha-coverage
           path: |
