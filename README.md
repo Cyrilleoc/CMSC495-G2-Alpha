@@ -1,10 +1,38 @@
-# CMSC 495 · Group G-2 · Customer Service Alpha (starter implementation)
+# CMSC 495 · Group G-2 · Customer Service Final Portfolio (Local Prototype)
 
 **Team:** Nonvignon Oussou (Lead Architect), Dylan Albert (Interface Designer), Lo Morton (Integration Lead).  
 **Status:** Group G-2 shared Alpha prototype, with PR-based peer review and CI checks. Not production-ready.  
-**Course:** CMSC 495 · Unit 5 Assignment 1.
+**Course:** CMSC 495 · Unit 8 Final Project Portfolio.
 
 > **Group repository:** https://github.com/Cyrilleoc/CMSC495-G2-Alpha. Review the latest pull requests, commits, and Actions checks for current evidence. This remains a local coursework prototype, not a deployed production service.
+
+## Unit 8 final portfolio — start here
+
+The integrated educational application now has repeatable customer-to-agent demonstrations, **51 passing tests**, a 90% CI statement-coverage gate (**96.28% observed in the verified Unit 8 branch CI**), a local-demo Docker image and an ephemeral CI container smoke test. These are **not a public deployment** or proof of production security.
+
+- [Final portfolio plan, evidence matrix and video outline](docs/UNIT8_PORTFOLIO.md)
+- [Quality metrics and coverage limits](docs/QUALITY_REPORT.md)
+- [API reference](docs/API_REFERENCE.md) · [End-user manual](docs/USER_GUIDE.md)
+- [Installation and local deployment](docs/INSTALL_AND_DEPLOY.md)
+- [Technical stakeholder video storyboard](docs/VIDEO_DEMO_STORYBOARD.md)
+- [Technical debt and remaining security gates](docs/TECHNICAL_DEBT.md)
+- [Verified vs. pending team contributions](docs/CONTRIBUTIONS.md)
+
+To reproduce tests and quality evidence locally:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt -r requirements-dev.txt
+python -m pytest -q --cov=app --cov-report=term-missing --cov-fail-under=90
+python scripts/demo_flow.py
+python scripts/benchmark_retrieval.py
+python scripts/benchmark_api.py
+```
+
+**Security:** This coursework system trusts fake demo role headers and must remain on localhost. Before any external release, replace them with real verified authentication and complete security, privacy and scale validation.
+
+---
 
 ## 1. Working Alpha scope
 
@@ -96,21 +124,15 @@ Use the returned conversation UUID with `/v1/conversations/{id}/messages`. A com
 
 All customer and agent API responses under `/v1/` include `Cache-Control: no-store`. This directs compliant browsers and intermediary caches not to store potentially sensitive conversation, ticket, or error-response information, including HTTP 429 rate-limit responses.
 
-Automated tests cover the header on HTTP 200, 403, and 429 responses. Follow-up testing should cover unauthenticated HTTP 401 responses and verify that routes outside `/v1/` are unaffected.
+Automated tests cover API 401, 403 and 429 caching policy and confirm `/healthz` and `/` are not automatically marked `no-store`.
 
 This header is an additional privacy safeguard; it does not replace authentication, authorization, secure transport, or responsible data and log handling.
 
-## 5. Continuous integration
+## 5. Continuous integration and local deployment validation
 
-`.github/workflows/ci.yml` triggers on pushes and pull requests and performs:
+`.github/workflows/ci.yml` triggers on pushes and pull requests. It installs Python dependencies, compiles source, runs pytest with a **90% minimum statement-coverage gate**, uploads HTML/XML coverage artifacts, verifies all three end-to-end HTTP scenarios, runs FAQ and API microbenchmarks, screens tracked filenames for obvious secrets, and builds/smoke-tests an ephemeral container on the runner.
 
-1. Checkout and Python 3.13 setup.
-2. Dependency installation.
-3. Python source compilation.
-4. Unit/integration tests with pytest.
-5. A basic check that runtime secret files aren't tracked.
-
-**Verification:** The original Ubuntu WSL demo passed 22 tests; a separate local test of the PR #1 caching change passed 23 tests. PR reviewer RedBred109 reported passing checks and approved the changes. Recheck the latest GitHub Actions status before final submission.
+**Verified Unit 8 branch:** 51 tests passed; 96.28% statement coverage; container API and HTML smoke tests passed. See the latest [GitHub Actions workflow](https://github.com/Cyrilleoc/CMSC495-G2-Alpha/actions) and [quality report](docs/QUALITY_REPORT.md). This is not automatic deployment to an external host.
 
 ## 6. Security and technical-debt honesty
 
