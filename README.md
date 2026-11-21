@@ -16,6 +16,7 @@ The integrated educational application now has repeatable customer-to-agent demo
 - [Installation and local deployment](docs/INSTALL_AND_DEPLOY.md)
 - [Technical stakeholder video storyboard](docs/VIDEO_DEMO_STORYBOARD.md)
 - [Technical debt and remaining security gates](docs/TECHNICAL_DEBT.md)
+- [Verified vs. pending team contributions](docs/CONTRIBUTIONS.md)
 
 To reproduce tests and quality evidence locally:
 
