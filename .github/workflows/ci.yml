@@ -1,4 +1,4 @@
-name: Alpha CI
+name: Alpha CI and local deployment verification
 on:
   push:
   pull_request:
@@ -15,18 +15,47 @@ jobs:
         with:
           python-version: '3.13'
           cache: pip
-      - name: Install dependencies
-        run: python -m pip install -r requirements.txt
-      - name: Compile Python sources
+      - name: Install application and quality dependencies
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install -r requirements-dev.txt
+      - name: Compile Python source
         run: python -m compileall -q app
-      - name: Run unit and integration tests
-        run: python -m pytest -q
-      - name: Verify full Alpha API demonstration
+      - name: Run tests and enforce statement coverage
+        run: |
+          python -m pytest -q --cov=app --cov-report=term-missing --cov-report=xml:coverage.xml --cov-report=html:htmlcov --cov-fail-under=90
+      - name: Upload coverage evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: alpha-coverage
+          path: |
+            coverage.xml
+            htmlcov/
+          retention-days: 30
+      - name: Verify full Alpha HTTP demonstration
         run: python scripts/demo_flow.py
-      - name: Measure FAQ accuracy and retrieval timing
+      - name: Benchmark FAQ correctness and retrieval time
         run: python scripts/benchmark_retrieval.py
-      - name: Check for accidentally committed secrets
+      - name: Scan tracked filenames for obvious runtime secrets
         run: |
           if git ls-files | grep -Eq '(^|/)(\.env$|\.env\.[^e]|secrets\.json$|alpha\.db$)'; then
             echo 'Sensitive/runtime file is tracked'; exit 1
           fi
+      - name: Build reproducible local-demo container
+        run: docker build -t g2-alpha-ci .
+      - name: Smoke-test ephemeral local container
+        run: |
+          docker run -d --name g2-alpha-smoke -p 127.0.0.1:8765:8000 -e AI_PROVIDER=local g2-alpha-ci
+          trap 'docker logs g2-alpha-smoke || true; docker rm -f g2-alpha-smoke || true' EXIT
+          success=0
+          for i in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:8765/healthz > /tmp/health.json; then
+              success=1; break
+            fi
+            sleep 1
+          done
+          test "$success" = "1"
+          grep -q '"status":"ok"' /tmp/health.json
+          curl --silent --fail http://127.0.0.1:8765/ > /tmp/home.html
+          grep -qi 'Group G-2' /tmp/home.html
+          echo "Ephemeral container API and web UI smoke checks passed."
