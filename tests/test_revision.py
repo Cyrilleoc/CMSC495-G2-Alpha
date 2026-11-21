@@ -126,20 +126,24 @@ def test_429_no_store_on_every_rate_limited_response(tmp_path, monkeypatch):
             assert denied.headers['retry-after'] == '60'
 
 
-@pytest.mark.parametrize('raw,private_value', [
-    ('Contact alice@example.org today', 'alice@example.org'),
-    ('Emails: first@example.com and second@test.co please', 'first@example.com'),
-    ('Call (615) 555-0123', '(615) 555-0123'),
-    ('Call +1 (615) 555-0123', '+1 (615) 555-0123'),
-    ('Call 615-555-0123', '615-555-0123'),
-    ('Call 615.555.0123', '615.555.0123'),
-    ('Call 615 555 0123', '615 555 0123'),
-    ('Call 1-615-555-0123', '1-615-555-0123'),
+@pytest.mark.parametrize('raw,private_values,expected_marker,expected_count', [
+    ('Contact alice@example.org today', ('alice@example.org',), '[email redacted]', 1),
+    ('Emails: first@example.com and second@test.co please',
+     ('first@example.com', 'second@test.co'), '[email redacted]', 2),
+    ('Call (615) 555-0123', ('(615) 555-0123',), '[phone redacted]', 1),
+    ('Call +1 (615) 555-0123', ('+1 (615) 555-0123',), '[phone redacted]', 1),
+    ('Call 615-555-0123', ('615-555-0123',), '[phone redacted]', 1),
+    ('Call 615.555.0123', ('615.555.0123',), '[phone redacted]', 1),
+    ('Call 615 555 0123', ('615 555 0123',), '[phone redacted]', 1),
+    ('Call 1-615-555-0123', ('1-615-555-0123',), '[phone redacted]', 1),
 ])
-def test_parameterized_redaction(raw, private_value):
+def test_parameterized_redaction(raw, private_values, expected_marker, expected_count):
     masked = redact(raw)
-    assert private_value not in masked
-    assert '[email redacted]' in masked or '[phone redacted]' in masked
+    for private_value in private_values:
+        assert private_value not in masked
+    assert masked.count(expected_marker) == expected_count
+    other_marker = '[phone redacted]' if expected_marker == '[email redacted]' else '[email redacted]'
+    assert other_marker not in masked
 
 
 def test_redact_multiple_emails_and_phone_numbers():
