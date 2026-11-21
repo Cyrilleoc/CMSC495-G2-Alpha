@@ -8,7 +8,7 @@
 
 ## Unit 8 final portfolio — start here
 
-The integrated educational application now has repeatable customer-to-agent demonstrations, **51 passing tests**, a 90% CI statement-coverage gate (**96.28% observed on the reviewed Unit 8 branch**), a local-demo Docker image and an ephemeral CI container smoke test. These are **not a public deployment** or proof of production security.
+The integrated educational application now has repeatable customer-to-agent demonstrations, **51 passing tests**, a 90% CI statement-coverage gate (**96.28% observed in the verified Unit 8 branch CI**), a local-demo Docker image and an ephemeral CI container smoke test. These are **not a public deployment** or proof of production security.
 
 - [Final portfolio plan, evidence matrix and video outline](docs/UNIT8_PORTFOLIO.md)
 - [Quality metrics and coverage limits](docs/QUALITY_REPORT.md)
