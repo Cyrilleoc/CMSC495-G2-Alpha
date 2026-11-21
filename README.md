@@ -160,3 +160,17 @@ Each person must review **one teammate's real module** and submit an **exactly 2
 - FastAPI TestClient: https://fastapi.tiangolo.com/tutorial/testing/
 - GitHub Actions Python setup: https://github.com/actions/setup-python
 - OpenAI Python Responses API: https://developers.openai.com/api/reference/python
+
+## Unit 5 instructor-feedback revision (November 2026)
+
+Following Dr. Shaalan's feedback, the group prepared a stronger API-level demonstration, privacy/error-path tests, a precomputed FAQ retrieval index, and a separate optional hosted-model provider adapter. The original demonstration-only identity system remains insecure; **do not deploy publicly**.
+
+From the repository root, after installing dependencies, execute these commands:
+
+- `python -m pytest -q`
+- `python scripts/demo_flow.py`
+- `python scripts/benchmark_retrieval.py`
+
+See [Unit 5 Revision Evidence](docs/UNIT5_REVISION_EVIDENCE.md) for specific supported, unsupported and simulated provider-failure scenarios. See [Technical Debt](docs/TECHNICAL_DEBT.md) for implemented versus outstanding mitigations.
+
+In a local preparation environment, 51 tests passed and the six-entry FAQ retrieval benchmark showed an illustrative ~2.6x speedup while retaining expected results on seven curated questions. **These are not production reliability, fairness or real hosted-model results.** Check the current revision pull request and GitHub Actions for fresh remote CI results. Earlier 22/23-test counts elsewhere in this document refer to the original Alpha.
